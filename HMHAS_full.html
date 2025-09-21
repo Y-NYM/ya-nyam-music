@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>HIT ME HARD AND SOFT — immersive</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="nnn.style.css">
+
+</head>
+<body class="page">
+
+<!-- HERO -->
+<section class="hero-wrap" id="hero">
+  <div class="hero-overlay"></div>
+  <div class="hero-card" role="region" aria-label="HMHAS hero">
+    <div class="album" id="album">
+      <div class="badge">NEW ALBUM</div>
+      <div class="cover" id="cover"
+           style='background-image:
+             radial-gradient(circle at 25% 20%, rgba(77,124,254,0.08), transparent),
+             linear-gradient(180deg, rgba(0,0,0,0.32), rgba(0,0,0,0.45)),
+             url("https://preview.redd.it/hit-me-hard-and-soft-pc-wallpaper-v0-80blelsdr1zc1.jpeg?width=1080&crop=smart&auto=webp&s=e74f3dbc87c4b726eaa42077dc83ec150e6c5a66");'>
+      </div>
+      <div class="glass"></div>
+      <div class="center-txt">
+        <div class="title">HIT ME HARD AND SOFT</div>
+        <div class="sub">An immersive experience — click the cover to toggle Blonde vibe</div>
+      </div>
+    </div>
+
+    <div class="info">
+      <div>
+        <div class="h1">HIT ME HARD AND SOFT</div>
+        <div class="lead">Ощущение альбома — стекло, глубина, холодные волны и близость. На этой странице — интерактивные превью, отсылки к прошлым эрам и визуальная галерея.</div>
+      </div>
+
+      <div class="controls">
+        <button class="btn" id="enterBtn">Войти в альбом</button>
+        <button class="btn ghost" id="openTracks">Перейти к трекам</button>
+        <div style="width:14px"></div>
+        <div class="hint"><div style="width:10px;height:10px;border-radius:50%;background:var(--accent-green);box-shadow:0 8px 28px rgba(32,255,122,0.08);margin-top:3px"></div><div style="font-size:13px;color:var(--muted)">green roots — нажми внизу</div></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- TRACKS -->
+<section class="section" id="tracksSection">
+  <h2>Tracks — Превью</h2>
+  <div class="tracks" id="tracksGrid">
+    <!-- Tracks are injected by JS; initial sample tracks below (including Wildflower) -->
+  </div>
+</section>
+
+<!-- ERAS -->
+<section class="section" id="erasSection">
+  <h2>Отсылки к эрам</h2>
+  <div class="eras">
+    <div class="era" id="eraGreen" title="Green Roots — click">
+      <h3>Green Roots</h3>
+      <p>Кислотно-зелёная эпоха — цвет, дерзкая эстетика, корни и дерзость.</p>
+    </div>
+    <div class="era" id="eraBlonde" title="Blonde era — click">
+      <h3>Blonde Era</h3>
+      <p>Тёплая, интимная, светлая — рваные эмоции и мягкая текстура.</p>
+    </div>
+    <div class="era" id="eraHappier" title="Happier Than Ever — click">
+      <h3>Happier Than Ever</h3>
+      <p>Винтажные тона и пастель — ностальгия и оркестровая глубина.</p>
+    </div>
+  </div>
+</section>
+
+<!-- GALLERY -->
+<section class="section" id="gallerySection">
+  <h2>Gallery</h2>
+  <div class="gallery" id="galleryGrid">
+    <!-- tiles injected by JS -->
+  </div>
+</section>
+
+<!-- SECRET (green dot + panel) -->
+<div class="secret" id="secret">
+  <div class="dot" id="greenDot" title="Green Roots secret"></div>
+  <div class="panel" id="secretPanel" role="dialog" aria-hidden="true">
+    <strong>Green Roots — throwback</strong>
+    <p style="margin-top:8px;color:#333">Наткнись на трек "The Greatest" — и появится скрытое послание. Нажми 'g' на клавиатуре для быстрого включения.</p>
+  </div>
+</div>
+
+<!-- PAPER (happier) -->
+<div class="paper" id="paper" style="display:none;position:fixed;left:20px;bottom:120px;padding:16px;border-radius:12px;background:#fff;color:#111;z-index:60;box-shadow:0 18px 60px rgba(0,0,0,0.4);max-width:300px">
+  <h4 style="margin:0 0 6px 0">Happier — echo</h4>
+  <p style="margin:0;font-size:14px">"we found each other in the grain of light" — текстурный отсыл к прошлой эпохе.</p>
+</div>
+
+<!-- BLONDE AURA (global overlay) -->
+<div class="blonde-aura" id="blondeAura"></div>
+
+<!-- player -->
+<div class="player" id="player">
+  <div class="cover-mini" id="miniCover" style="background-image:linear-gradient(135deg,#051328,#0b1222)"></div>
+  <div class="meta">
+    <div id="playingTitle" style="font-weight:800">HMHAS — preview</div>
+    <div style="font-size:13px;color:var(--muted)">Hover tracks to preview → click to pin</div>
+  </div>
+  <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+    <div class="progress" id="progress"><i></i></div>
+    <button class="btn ghost" id="stopBtn">Stop</button>
+  </div>
+</div>
+
+<!-- footer -->
+<footer style="text-align:center;padding:40px 20px;color:var(--muted);margin-top:40px">
+  © 2025 Billie Eilish — fan interactive • built: liquid glass vibe
+</footer>
+
+<!-- SCRIPT -->
+<script>
+/* ========== HMHAS frontend logic ==========
+
+Features:
+- dynamic track cards (audio via <audio> when provided; otherwise synthesized preview via WebAudio)
+- functions: addTrack({title,desc,time,thumb,src}) and removeTrack(index)
+- era toggles: green, blonde, happier
+- gallery injection
+- secret panel and hidden reveal when clicking certain tracks
+
+Use:
+- call addTrack(...) in console or modify initialTracks array below
+
+=========================================== */
+
+/* Utilities */
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+
+/* Audio context for synthetic previews */
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+const ac = AudioContext ? new AudioContext() : null;
+
+/* simple tone player used when no mp3 present */
+function playTone(freq, dur=0.36, type='sine', when=0){
+  if(!ac) return;
+  const now = ac.currentTime + when;
+  const o = ac.createOscillator();
+  const g = ac.createGain();
+  o.type = type; o.frequency.value = freq;
+  g.gain.value = 0;
+  o.connect(g); g.connect(ac.destination);
+  g.gain.setValueAtTime(0, now);
+  g.gain.linearRampToValueAtTime(0.2, now + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.001, now + dur);
+  o.start(now); o.stop(now + dur + 0.02);
+  return {o,g};
+}
+
+/* Helper: resume audio on first gesture (Mobile/Chrome policy) */
+function ensureAudioResume(){
+  if(!ac) return;
+  if(ac.state === 'suspended') ac.resume().catch(()=>{});
+}
+
+/* Tracks management */
+const tracksGrid = $('#tracksGrid');
+let tracks = []; // array of track objects {title,desc,time,thumb,src}
+
+/* Render single track card */
+function renderTrack(track, idx){
+  const el = document.createElement('div');
+  el.className = 'track';
+  el.dataset.index = idx;
+  el.innerHTML = `
+    <div class="thumb" style="background-image:${track.thumb?`url('${track.thumb}')`:`linear-gradient(135deg,#051328,#0b1222)`};"></div>
+    <div class="meta">
+      <div class="title">${track.title}</div>
+      <div class="desc">${track.desc||''}</div>
+    </div>
+    <div class="controls-small">
+      <div class="time">${track.time||''}</div>
+    </div>`;
+  // hover -> preview snippet
+ el.addEventListener('mouseenter', () => {
+  ensureAudioResume();
+  if(track.src){
+    if(!track._audio){
+      track._audio = new Audio(track.src);
+      track._audio.preload = 'auto';
+      track._audio.volume = 0.9;
+      track._audio.currentTime = 0;
+    }
+    track._audio.currentTime = 0;
+    track._audio.play().catch(()=>{});
+    startProgress(track._audio);
+    $('#playingTitle').textContent = 'Preview: ' + track.title;
+    $('#miniCover').style.backgroundImage = track.thumb?`url('${track.thumb}')`:`linear-gradient(135deg,#051328,#0b1222)`;
+  }
+  // else — убрали, теперь без синтезированного звука
+});
+
+  // leave -> stop if synthesized (osc ends automatically), if audio, pause
+  el.addEventListener('mouseleave', () => {
+    if(track._audio && !track._pinned){
+      track._audio.pause();
+      track._audio.currentTime = 0;
+      resetProgress();
+      $('#playingTitle').textContent = 'HMHAS — preview';
+    }
+  });
+  // click -> pin/unpin (if pinned, audio remains)
+  el.addEventListener('click', () => {
+    ensureAudioResume();
+    track._pinned = !track._pinned;
+    if(track._pinned){
+      el.style.borderColor = 'rgba(77,124,254,0.12)';
+      if(track.src){
+        if(!track._audio){ track._audio = new Audio(track.src); track._audio.preload='auto'; track._audio.volume=0.9; }
+        track._audio.loop = true;
+        track._audio.play();
+        startProgress(track._audio);
+      } else {
+        // small chord to indicate pin (synth)
+        playTone(330,0.5,'sawtooth'); playTone(440,0.4,'sine',0.05);
+        animateProgress(1000);
+      }
+      // special easter: if this is "The Greatest" (title match) -> reveal secret
+      if(track.title && /greatest/i.test(track.title)){
+        revealSecretTemporarily();
+        activateGreen(true);
+      }
+    } else {
+      el.style.borderColor = '';
+      if(track._audio){ track._audio.loop = false; track._audio.pause(); track._audio.currentTime = 0; resetProgress(); }
+      $('#playingTitle').textContent = 'HMHAS — preview';
+    }
+  });
+  return el;
+}
+
+/* Render all tracks */
+function renderTracks(){
+  tracksGrid.innerHTML = '';
+  tracks.forEach((t,i)=> tracksGrid.appendChild(renderTrack(t,i)));
+}
+
+/* Progress bar handling for audio element */
+const progressEl = $('#progress > i');
+let progressInterval = null;
+function startProgress(audio){
+  if(!audio || !progressEl) return;
+  resetProgress();
+  function tick(){
+    const pct = (audio.currentTime / Math.max(0.001, audio.duration)) * 100;
+    progressEl.style.width = (isFinite(pct)?Math.min(100,pct):0) + '%';
+    if(audio.paused || audio.ended) { clearInterval(progressInterval); }
+  }
+  progressInterval = setInterval(tick, 120);
+  tick();
+}
+function resetProgress(){ if(progressInterval) clearInterval(progressInterval); progressEl.style.width = '0%'; }
+function animateProgress(ms=300){ progressEl.style.width = '80%'; setTimeout(()=>progressEl.style.width='0%', ms); }
+
+/* Add / remove track API - user can use these in console */
+function addTrack(obj){
+  // expected keys: title (required), desc, time, thumb (url), src (audio url), tone (base freq)
+  if(!obj || !obj.title) { console.warn('addTrack requires an object with at least title'); return; }
+  tracks.push({
+    title: obj.title,
+    desc: obj.desc || '',
+    time: obj.time || '',
+    thumb: obj.thumb || '',
+    src: obj.src || '',
+    tone: obj.tone || null,
+    _audio: null,
+    _pinned: false
+  });
+  renderTracks();
+}
+function removeTrack(index){
+  if(index<0 || index>=tracks.length) return;
+  const t = tracks[index];
+  if(t._audio){ t._audio.pause(); t._audio = null; }
+  tracks.splice(index,1);
+  renderTracks();
+}
+
+/* Initial sample tracks (including Wildflower) */
+const initialTracks = [
+  
+    {title:' L`AMOUR DE MA VIE', desc:' (OVER NOW EXTENDED EDIT)', time:'0:38', thumb:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSr9D2YZNcCfdNWD3pyMUhzVDxR6v2cdDgJ-w&s', src: 'lamourdemavieextended.mp3'},
+  {title:'L`AMOUR DE MA VIE', desc:'Intro — cold percussion and glass hits', time:'0:38', thumb:'https://preview.redd.it/hit-me-hard-and-soft-pc-wallpaper-v0-80blelsdr1zc1.jpeg?width=1080&crop=smart&auto=webp&s=e74f3dbc87c4b726eaa42077dc83ec150e6c5a66'},
+  {title:'BITTERSUIT', desc:'Whispered verses, sudden peaks', time:'0:42', thumb:'https://preview.redd.it/hit-me-hard-and-soft-pc-wallpaper-v0-80blelsdr1zc1.jpeg?width=1080&crop=smart&auto=webp&s=e74f3dbc87c4b726eaa42077dc83ec150e6c5a66'},
+  {title:'LUNCH', desc:'Anthemic bridge — nod to green roots', time:'1:04', thumb:'https://preview.redd.it/hit-me-hard-and-soft-pc-wallpaper-v0-80blelsdr1zc1.jpeg?width=1080&crop=smart&auto=webp&s=e74f3dbc87c4b726eaa42077dc83ec150e6c5a66'},
+  {title:'BLUE', desc:'Washing melody — transition to warmth', time:'0:55', thumb:'https://preview.redd.it/hit-me-hard-and-soft-pc-wallpaper-v0-80blelsdr1zc1.jpeg?width=1080&crop=smart&auto=webp&s=e74f3dbc87c4b726eaa42077dc83ec150e6c5a66'},
+  {title:'OCEAN EYES', desc:'Sharp staccato, skin-deep emotion', time:'0:46', thumb: '//i.scdn.co/image/ab67616d0000b273a9f6c04ba168640b48aa5795',src:'./oceaneyes.mp3'},
+{ 
+  title:'WHAT WAS I MADE FOR',
+  desc:'Whisper-close production',
+  time:'0:39',
+  thumb:'https://cdn-images.dzcdn.net/images/cover/2562b8d68b75635bb2d4b92dc7ed9ab5/1900x1900-000000-80-0-0.jpg',
+  src:'./whatwasimadefor.mp3'
+},
+{title:'WILDFLOWER', desc:'Fresh and poetic — new single', time:'1:02', thumb:'https://preview.redd.it/hit-me-hard-and-soft-pc-wallpaper-v0-80blelsdr1zc1.jpeg?width=1080&crop=smart&auto=webp&s=e74f3dbc87c4b726eaa42077dc83ec150e6c5a66', src:'./wildflower.mp3'}
+
+];
+initialTracks.forEach(t=>addTrack(t));
+
+/* Simple gallery injection */
+const galleryGrid = $('#galleryGrid');
+const galleryImgs = [
+  'https://preview.redd.it/hit-me-hard-and-soft-pc-wallpaper-v0-80blelsdr1zc1.jpeg?width=1080&crop=smart&auto=webp&s=e74f3dbc87c4b726eaa42077dc83ec150e6c5a66',
+  'https://images.unsplash.com/photo-1503264116251-35a269479413?q=80&w=1400&auto=format&fit=crop&ixlib=rb-4.0.3&s=6b3b6f1a6c7a7a9af5f2d3f1b4db2bf4',
+  'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=1400&auto=format&fit=crop&ixlib=rb-4.0.3&s=2f9f7ec0e8b6c7b2a9c4a9e7b2b5f9b1',
+  'https://images.unsplash.com/photo-1508610048659-a06e0c6911b7?q=80&w=1400&auto=format&fit=crop&ixlib=rb-4.0.3&s=8d3db5f2c1b8eb2f7f2f4c0a6ae2f3d9'
+];
+galleryImgs.forEach(src=>{
+  const d = document.createElement('div');
+  d.className='tile';
+  d.style.backgroundImage = `url('${src}')`;
+  d.addEventListener('click', ()=> {
+    // quick modal-ish zoom: open cover as hero background briefly
+    document.getElementById('cover').style.backgroundImage = `url('${src}')`;
+  });
+  galleryGrid.appendChild(d);
+});
+
+/* Era toggles */
+const body = document.body;
+const greenDot = $('#greenDot');
+const secretPanel = $('#secretPanel');
+let greenOn = false;
+function activateGreen(temp=false){
+  greenOn = temp ? true : !greenOn;
+  if(greenOn){
+    document.documentElement.style.setProperty('--accent-blue','#2eea9b');
+    body.style.background = 'linear-gradient(180deg,#04120b,#001212)';
+    $$('.track').forEach(t=> t.style.border = '1px solid rgba(46,242,122,0.06)');
+    greenDot.style.transform = 'scale(1.12)';
+    setTimeout(()=>{ if(temp){ greenOn=false; activateGreen(true); } }, temp?2200:0);
+  } else {
+    document.documentElement.style.setProperty('--accent-blue','#4d7cfe');
+    body.style.background = '';
+    $$('.track').forEach(t=> t.style.border = '');
+    greenDot.style.transform = '';
+  }
+}
+greenDot.addEventListener('click', ()=> { activateGreen(); secretPanel.classList.toggle('show'); secretPanel.setAttribute('aria-hidden', String(!secretPanel.classList.contains('show'))); });
+
+/* Blonde aura toggle: click album */
+const album = document.getElementById('album');
+const blondeAura = document.getElementById('blondeAura');
+let blondeOn = false;
+album.addEventListener('click', ()=> {
+  blondeOn = !blondeOn;
+  if(blondeOn){ body.classList.add('blonde-on'); playTone(330,0.5,'sawtooth'); } else { body.classList.remove('blonde-on'); playTone(220,0.18,'sine'); }
+});
+
+/* Happier paper toggle (by clicking era H) */
+const eraH = $('#eraHappier');
+const paper = $('#paper');
+eraH.addEventListener('click', ()=> {
+  const show = paper.style.display==='block';
+  paper.style.display = show ? 'none' : 'block';
+  if(!show) playTone(176,0.5,'sine');
+});
+
+/* reveal secret when The Greatest clicked via renderTrack click handler (see above) */
+function revealSecretTemporarily(){
+  secretPanel.classList.add('show');
+  secretPanel.setAttribute('aria-hidden','false');
+  setTimeout(()=>{ secretPanel.classList.remove('show'); secretPanel.setAttribute('aria-hidden','true'); }, 3000);
+}
+
+/* mini player controls: stop pinned audios */
+$('#stopBtn').addEventListener('click', ()=> {
+  tracks.forEach(t=> { if(t._audio){ t._audio.pause(); t._audio.currentTime=0; t._pinned=false; } });
+  resetProgress();
+  $('#playingTitle').textContent = 'HMHAS — preview';
+  $$('.track').forEach(el=> el.style.borderColor='');
+});
+
+/* quick scroll to tracks */
+$('#openTracks').addEventListener('click', ()=> $('#tracksSection').scrollIntoView({behavior:'smooth'}));
+$('#enterBtn').addEventListener('click', ()=> window.scrollTo({top:0,behavior:'smooth'}));
+
+/* keyboard shortcuts */
+window.addEventListener('keydown', (e)=>{
+  if(e.key==='g') { activateGreen(); secretPanel.classList.toggle('show'); }
+  if(e.key==='b') { album.click(); }
+  if(e.key==='h') { paper.style.display = paper.style.display==='block' ? 'none' : 'block'; }
+});
+
+/* Expose API to user */
+window.HMHAS = {
+  addTrack: addTrack,
+  removeTrack: removeTrack,
+  setCover: (url)=> { document.getElementById('cover').style.backgroundImage = `url('${url}')`; document.getElementById('miniCover').style.backgroundImage = `url('${url}')`; },
+  listTracks: ()=> tracks.map((t,i)=>({i, title:t.title, src: !!t.src}))
+};
+
+/* Small console hint */
+console.log("HMHAS loaded. Use HMHAS.addTrack({title:'Title', desc:'..', time:'1:02', thumb:'url', src:'audio.mp3', tone:220}) to add. HMHAS.setCover('url') to set cover image. Keys: g (green), b (blonde), h (happier).");
+</script>
+</body>
+</html>
+
+
